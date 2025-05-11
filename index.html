@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Classifica Vendite PDV</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f8f9fa;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    td input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.2em;
+    }
+    td.pdv {
+      width: 30%;
+      font-weight: bold;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 2rem;
+      white-space: pre-wrap;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Classifica Vendite Punti Vendita</h1>
+
+  <table id="venditeTable">
+    <thead>
+      <tr>
+        <th>Punto Vendita</th>
+        <th>Valore (€)</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+  </table>
+
+  <div>
+    <button onclick="resetTable()">🔄 Reset</button>
+    <button onclick="ordinaVendite()">📊 Ordina</button>
+    <button onclick="generaMessaggio()">📨 Messaggio Telegram</button>
+    <button onclick="generaWhatsApp()">📲 Messaggio WhatsApp</button>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const puntiVendita = [
+      "AQUILA", "AVEZZANO", "BOLOGNA", "CARPI", "CDC", "CESENA", "CHIOGGIA", "CIVITANOVA", "CONEGLIANO", "FABRIANO",
+      "FAENZA", "FANO", "FOLIGNO", "FORLI", "IMOLA", "LANCIANO", "MACERATA", "MARANELLO", "MONSANO", "OSIMO",
+      "PADOVA", "PESCARA", "PESARO", "REGGIO", "RIETI", "RIMINI", "RSM", "SALA", "SBT", "SET", "TERMOLI",
+      "TERAMO", "VASTO", "VICENZA", "VITERBO"
+    ].sort();
+
+    const tbody = document.getElementById('tableBody');
+    puntiVendita.forEach(pdv => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="pdv">${pdv}</td>
+        <td><input type="number" placeholder="Inserisci venduto"></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    function resetTable() {
+      document.querySelectorAll('input').forEach(input => input.value = '');
+      document.getElementById('output').textContent = '';
+    }
+
+    function ordinaVendite() {
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const valA = parseFloat(a.cells[1].querySelector('input').value) || 0;
+        const valB = parseFloat(b.cells[1].querySelector('input').value) || 0;
+        return valB - valA;
+      });
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function generaMessaggio() {
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const dati = rows.map(row => {
+        const pdv = row.cells[0].textContent.trim();
+        const val = parseFloat(row.cells[1].querySelector('input').value) || 0;
+        return { pdv, val };
+      }).sort((a, b) => b.val - a.val);
+
+      let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
+      dati.forEach((item, i) => {
+        // Aggiungi spazi per l'allineamento
+        messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
+      });
+
+      document.getElementById('output').textContent = messaggio;
+    }
+
+    function generaWhatsApp() {
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const dati = rows.map(row => {
+        const pdv = row.cells[0].textContent.trim();
+        const val = parseFloat(row.cells[1].querySelector('input').value) || 0;
+        return { pdv, val };
+      }).sort((a, b) => b.val - a.val);
+
+      let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
+      dati.forEach((item, i) => {
+        // Aggiungi spazi per l'allineamento
+        messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
+      });
+
+      // Codifica il messaggio per il link WhatsApp
+      const encodedMessage = encodeURIComponent(messaggio);
+      const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
+      window.open(whatsappLink, '_blank');
+    }
+  </script>
+</body>
+</html>
