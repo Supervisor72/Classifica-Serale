@@ -2,6 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classifica Vendite PDV</title>
   <style>
     body {
@@ -28,7 +29,7 @@
       color: white;
     }
     td input {
-      width: 45%; /* Ridotto da 60% a 45% per stringere ancora la casella */
+      width: 100%;
       padding: 12px;
       font-size: 1.2em;
     }
@@ -69,7 +70,7 @@
     <button onclick="resetTable()">🔄 Reset</button>
     <button onclick="ordinaVendite()">📊 Ordina</button>
     <button onclick="generaMessaggio()">📨 Messaggio Telegram</button>
-    <button onclick="generaWhatsApp()">📲 Messaggio WhatsApp</button>
+    <button onclick="generaMessaggioWhatsapp()">📱 Messaggio WhatsApp</button>
   </div>
 
   <div id="output"></div>
@@ -124,11 +125,13 @@
 
       // Codifica il messaggio per il link Telegram
       const encodedMessage = encodeURIComponent(messaggio);
-      const telegramLink = `https://t.me/share/url?url=${encodedMessage}`;
-      window.open(telegramLink, '_blank');
+      const telegramLink = `tg://msg_url?url=${encodedMessage}`;
+
+      // Apri l'app Telegram
+      window.location.href = telegramLink;
     }
 
-    function generaWhatsApp() {
+    function generaMessaggioWhatsapp() {
       const rows = Array.from(tbody.querySelectorAll('tr'));
       const dati = rows.map(row => {
         const pdv = row.cells[0].textContent.trim();
@@ -141,10 +144,14 @@
         messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
       });
 
+      document.getElementById('output').textContent = messaggio;
+
       // Codifica il messaggio per il link WhatsApp
       const encodedMessage = encodeURIComponent(messaggio);
       const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
-      window.open(whatsappLink, '_blank');
+
+      // Apri l'app WhatsApp
+      window.location.href = whatsappLink;
     }
   </script>
 </body>
