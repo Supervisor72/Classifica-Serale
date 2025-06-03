@@ -58,6 +58,7 @@
     button.whatsapp-btn {
       background-color: #25D366; /* Verde per WhatsApp */
     }
+    /* Manteniamo l'output div se volessi usarlo per debug o altro in futuro, ma non lo popoleremo direttamente */
     #output {
       margin-top: 2rem;
       white-space: pre-wrap;
@@ -65,7 +66,8 @@
       border: 1px solid #ccc;
       padding: 1rem;
       border-radius: 5px;
-      word-break: break-word; /* Assicura che le parole lunghe vadano a capo */
+      word-break: break-word;
+      display: none; /* Nasconde l'output div di default se non lo usi */
     }
   </style>
 </head>
@@ -104,13 +106,12 @@
 
     const tbody = document.getElementById('tableBody');
     const venditeForm = document.getElementById('venditeForm');
-    const outputDiv = document.getElementById('output');
+    const outputDiv = document.getElementById('output'); // Mantenuto, ma non usato direttamente per la visualizzazione dei messaggi
 
     // Funzione per inizializzare le righe del form
     function initializeTable() {
       puntiVendita.forEach(pdv => {
         const row = document.createElement('tr');
-        // Usa un attributo `data-pdv` per identificare il punto vendita, utile per il salvataggio/caricamento
         row.innerHTML = `
           <td class="pdv">${pdv}</td>
           <td><input type="number" data-pdv="${pdv}" placeholder="Inserisci venduto"></td>
@@ -147,7 +148,7 @@
 
     function resetTable() {
       tbody.querySelectorAll('input').forEach(input => input.value = '');
-      outputDiv.textContent = '';
+      outputDiv.textContent = ''; // Pulisce comunque l'output div se avesse contenuto
       localStorage.removeItem('venditeData'); // Rimuove i dati salvati
       alert('Tutti i campi sono stati resettati e i dati cancellati!');
     }
@@ -162,7 +163,7 @@
       rows.forEach(row => tbody.appendChild(row));
     }
 
-    // --- Funzioni per la generazione dei messaggi ---
+    // --- Funzioni per la generazione dei messaggi (modificate) ---
 
     function getFormattedMessage() {
       const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -174,7 +175,7 @@
 
       let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
       dati.forEach((item, i) => {
-        const formattedValue = item.val.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Formatta senza decimali
+        const formattedValue = item.val.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${formattedValue}\n`;
       });
       return messaggio;
@@ -182,17 +183,6 @@
 
     function generaMessaggio() {
       const messaggio = getFormattedMessage();
-      outputDiv.textContent = messaggio; // Visualizza il messaggio nell'output div
-
-      // Codifica il messaggio per il link Telegram
-      // Telegram usa URL Scheme tg://msg_url?url= e richiede una URL valida, il testo va nel parametro 'url'.
-      // Per testo più lungo è preferibile usare l'API di Telegram, ma per messaggi brevi funziona.
-      // Un approccio più robusto per Telegram web/desktop sarebbe https://t.me/share/url?url=...&text=...
-      // Ma per l'apertura diretta dell'app, `tg://msg_url?text=` è più comune per solo testo.
-      // Se `tg://msg_url?url=` non funziona come previsto su tutti i dispositivi/client,
-      // un'alternativa più affidabile per *solo testo* che apre l'app su mobile è `tg://msg?text=`
-      // Tuttavia, per il web e app desktop, 't.me/share/url' è spesso preferito.
-      // Consideriamo il caso più comune per l'apertura diretta con il tuo setup:
       const encodedMessage = encodeURIComponent(messaggio);
       const telegramLink = `tg://msg?text=${encodedMessage}`;
       
@@ -201,11 +191,7 @@
 
     function generaMessaggioWhatsapp() {
       const messaggio = getFormattedMessage();
-      outputDiv.textContent = messaggio; // Visualizza il messaggio nell'output div
-
-      // Codifica il messaggio per il link WhatsApp
       const encodedMessage = encodeURIComponent(messaggio);
-      // WhatsApp usa `https://wa.me/?text=` per messaggi semplici
       const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
 
       window.location.href = whatsappLink;
@@ -214,13 +200,11 @@
     // --- Inizializzazione e Event Listeners ---
 
     document.addEventListener('DOMContentLoaded', () => {
-      initializeTable(); // Inizializza la tabella con tutti i punti vendita
-      loadData();        // Carica i dati salvati quando la pagina è pronta
+      initializeTable();
+      loadData();        
 
-      // Aggiungi un listener per il salvataggio automatico ad ogni input
       tbody.addEventListener('input', saveData);
 
-      // Associa le funzioni ai bottoni usando gli ID
       document.getElementById('resetBtn').addEventListener('click', resetTable);
       document.getElementById('orderBtn').addEventListener('click', ordinaVendite);
       document.getElementById('telegramBtn').addEventListener('click', generaMessaggio);
