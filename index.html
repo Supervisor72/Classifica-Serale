@@ -42,6 +42,21 @@
       margin: 10px 5px;
       font-size: 1em;
       cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      color: white;
+    }
+    button.reset-btn {
+      background-color: #dc3545; /* Rosso per il reset */
+    }
+    button.order-btn {
+      background-color: #007bff; /* Blu per ordina */
+    }
+    button.telegram-btn {
+      background-color: #0088cc; /* Blu scuro per Telegram */
+    }
+    button.whatsapp-btn {
+      background-color: #25D366; /* Verde per WhatsApp */
     }
     #output {
       margin-top: 2rem;
@@ -49,29 +64,33 @@
       background: #fff;
       border: 1px solid #ccc;
       padding: 1rem;
+      border-radius: 5px;
+      word-break: break-word; /* Assicura che le parole lunghe vadano a capo */
     }
   </style>
 </head>
 <body>
   <h1>Classifica Vendite Punti Vendita</h1>
 
-  <table id="venditeTable">
-    <thead>
-      <tr>
-        <th>Punto Vendita</th>
-        <th>Valore (€)</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-    </tbody>
-  </table>
+  <form id="venditeForm">
+    <table id="venditeTable">
+      <thead>
+        <tr>
+          <th>Punto Vendita</th>
+          <th>Valore (€)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+    </table>
 
-  <div>
-    <button onclick="resetTable()">🔄 Reset</button>
-    <button onclick="ordinaVendite()">📊 Ordina</button>
-    <button onclick="generaMessaggio()">📨 Messaggio Telegram</button>
-    <button onclick="generaMessaggioWhatsapp()">📱 Messaggio WhatsApp</button>
-  </div>
+    <div>
+      <button type="button" id="resetBtn" class="reset-btn">🔄 Reset</button>
+      <button type="button" id="orderBtn" class="order-btn">📊 Ordina</button>
+      <button type="button" id="telegramBtn" class="telegram-btn">📨 Messaggio Telegram</button>
+      <button type="button" id="whatsappBtn" class="whatsapp-btn">📱 Messaggio WhatsApp</button>
+    </div>
+  </form>
 
   <div id="output"></div>
 
@@ -79,23 +98,58 @@
     const puntiVendita = [
       "AQUILA", "AVEZZANO", "BOLOGNA", "CARPI", "CDC", "CESENA", "CHIOGGIA", "CIVITANOVA", "CONEGLIANO", "FABRIANO",
       "FAENZA", "FANO", "FOLIGNO", "FORLI", "IMOLA", "LANCIANO", "MACERATA", "MARANELLO", "MONSANO", "OSIMO",
-      "PADOVA", "PESCARA", "PESARO", "REGGIO", "RIETI", "RIMINI", "RSM", "SALA", "SBT" , "TERMOLI",
+      "PADOVA", "PESCARA", "PESARO", "REGGIO", "RIETI", "RIMINI", "RSM", "SALA", "SBT", "TERMOLI",
       "TERAMO", "VASTO", "VICENZA", "VITERBO"
     ].sort();
 
     const tbody = document.getElementById('tableBody');
-    puntiVendita.forEach(pdv => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="pdv">${pdv}</td>
-        <td><input type="number" placeholder="Inserisci venduto"></td>
-      `;
-      tbody.appendChild(row);
-    });
+    const venditeForm = document.getElementById('venditeForm');
+    const outputDiv = document.getElementById('output');
+
+    // Funzione per inizializzare le righe del form
+    function initializeTable() {
+      puntiVendita.forEach(pdv => {
+        const row = document.createElement('tr');
+        // Usa un attributo `data-pdv` per identificare il punto vendita, utile per il salvataggio/caricamento
+        row.innerHTML = `
+          <td class="pdv">${pdv}</td>
+          <td><input type="number" data-pdv="${pdv}" placeholder="Inserisci venduto"></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // --- Funzioni per il salvataggio e caricamento dati (LocalStorage) ---
+
+    function saveData() {
+      const dataToSave = {};
+      tbody.querySelectorAll('input[type="number"]').forEach(input => {
+        const pdvName = input.dataset.pdv;
+        dataToSave[pdvName] = input.value;
+      });
+      localStorage.setItem('venditeData', JSON.stringify(dataToSave));
+    }
+
+    function loadData() {
+      const storedData = localStorage.getItem('venditeData');
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        tbody.querySelectorAll('input[type="number"]').forEach(input => {
+          const pdvName = input.dataset.pdv;
+          if (data[pdvName]) {
+            input.value = data[pdvName];
+          }
+        });
+      }
+    }
+
+    // --- Funzioni esistenti modificate per il reset e l'ordine ---
 
     function resetTable() {
-      document.querySelectorAll('input').forEach(input => input.value = '');
-      document.getElementById('output').textContent = '';
+      tbody.querySelectorAll('input').forEach(input => input.value = '');
+      outputDiv.textContent = '';
+      localStorage.removeItem('venditeData'); // Rimuove i dati salvati
+      alert('Tutti i campi sono stati resettati e i dati cancellati!');
     }
 
     function ordinaVendite() {
@@ -108,7 +162,9 @@
       rows.forEach(row => tbody.appendChild(row));
     }
 
-    function generaMessaggio() {
+    // --- Funzioni per la generazione dei messaggi ---
+
+    function getFormattedMessage() {
       const rows = Array.from(tbody.querySelectorAll('tr'));
       const dati = rows.map(row => {
         const pdv = row.cells[0].textContent.trim();
@@ -118,41 +174,58 @@
 
       let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
       dati.forEach((item, i) => {
-        messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
+        const formattedValue = item.val.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Formatta senza decimali
+        messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${formattedValue}\n`;
       });
+      return messaggio;
+    }
 
-      document.getElementById('output').textContent = messaggio;
+    function generaMessaggio() {
+      const messaggio = getFormattedMessage();
+      outputDiv.textContent = messaggio; // Visualizza il messaggio nell'output div
 
       // Codifica il messaggio per il link Telegram
+      // Telegram usa URL Scheme tg://msg_url?url= e richiede una URL valida, il testo va nel parametro 'url'.
+      // Per testo più lungo è preferibile usare l'API di Telegram, ma per messaggi brevi funziona.
+      // Un approccio più robusto per Telegram web/desktop sarebbe https://t.me/share/url?url=...&text=...
+      // Ma per l'apertura diretta dell'app, `tg://msg_url?text=` è più comune per solo testo.
+      // Se `tg://msg_url?url=` non funziona come previsto su tutti i dispositivi/client,
+      // un'alternativa più affidabile per *solo testo* che apre l'app su mobile è `tg://msg?text=`
+      // Tuttavia, per il web e app desktop, 't.me/share/url' è spesso preferito.
+      // Consideriamo il caso più comune per l'apertura diretta con il tuo setup:
       const encodedMessage = encodeURIComponent(messaggio);
-      const telegramLink = `tg://msg_url?url=${encodedMessage}`;
-
-      // Apri l'app Telegram
+      const telegramLink = `tg://msg?text=${encodedMessage}`;
+      
       window.location.href = telegramLink;
     }
 
     function generaMessaggioWhatsapp() {
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      const dati = rows.map(row => {
-        const pdv = row.cells[0].textContent.trim();
-        const val = parseFloat(row.cells[1].querySelector('input').value) || 0;
-        return { pdv, val };
-      }).sort((a, b) => b.val - a.val);
-
-      let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
-      dati.forEach((item, i) => {
-        messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
-      });
-
-      document.getElementById('output').textContent = messaggio;
+      const messaggio = getFormattedMessage();
+      outputDiv.textContent = messaggio; // Visualizza il messaggio nell'output div
 
       // Codifica il messaggio per il link WhatsApp
       const encodedMessage = encodeURIComponent(messaggio);
+      // WhatsApp usa `https://wa.me/?text=` per messaggi semplici
       const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
 
-      // Apri l'app WhatsApp
       window.location.href = whatsappLink;
     }
+
+    // --- Inizializzazione e Event Listeners ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeTable(); // Inizializza la tabella con tutti i punti vendita
+      loadData();        // Carica i dati salvati quando la pagina è pronta
+
+      // Aggiungi un listener per il salvataggio automatico ad ogni input
+      tbody.addEventListener('input', saveData);
+
+      // Associa le funzioni ai bottoni usando gli ID
+      document.getElementById('resetBtn').addEventListener('click', resetTable);
+      document.getElementById('orderBtn').addEventListener('click', ordinaVendite);
+      document.getElementById('telegramBtn').addEventListener('click', generaMessaggio);
+      document.getElementById('whatsappBtn').addEventListener('click', generaMessaggioWhatsapp);
+    });
   </script>
 </body>
 </html>
