@@ -53,7 +53,7 @@
   </style>
 </head>
 <body>
-  <h1>Classifica Vendite Punti Vendita</h1>
+  <h1>Classifica Venduti Trony</h1>
 
   <table id="venditeTable">
     <thead>
@@ -139,7 +139,7 @@
         return { pdv, val };
       }).sort((a, b) => b.val - a.val);
 
-      let messaggio = "🏆 *CLASSIFICA FINALE* 🏆\n\n";
+      let messaggio = "🏆 *CLASSIFICA* 🏆\n\n";
       dati.forEach((item, i) => {
         messaggio += `${i + 1}. ${item.pdv.padEnd(12)}: € ${item.val.toLocaleString().padStart(10)}\n`;
       });
