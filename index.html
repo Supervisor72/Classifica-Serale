@@ -58,7 +58,6 @@
     button.whatsapp-btn {
       background-color: #25D366; /* Verde per WhatsApp */
     }
-    /* Manteniamo l'output div se volessi usarlo per debug o altro in futuro, ma non lo popoleremo direttamente */
     #output {
       margin-top: 2rem;
       white-space: pre-wrap;
@@ -106,9 +105,8 @@
 
     const tbody = document.getElementById('tableBody');
     const venditeForm = document.getElementById('venditeForm');
-    const outputDiv = document.getElementById('output'); // Mantenuto, ma non usato direttamente per la visualizzazione dei messaggi
+    const outputDiv = document.getElementById('output'); 
 
-    // Funzione per inizializzare le righe del form
     function initializeTable() {
       puntiVendita.forEach(pdv => {
         const row = document.createElement('tr');
@@ -119,8 +117,6 @@
         tbody.appendChild(row);
       });
     }
-
-    // --- Funzioni per il salvataggio e caricamento dati (LocalStorage) ---
 
     function saveData() {
       const dataToSave = {};
@@ -144,12 +140,10 @@
       }
     }
 
-    // --- Funzioni esistenti modificate per il reset e l'ordine ---
-
     function resetTable() {
       tbody.querySelectorAll('input').forEach(input => input.value = '');
-      outputDiv.textContent = ''; // Pulisce comunque l'output div se avesse contenuto
-      localStorage.removeItem('venditeData'); // Rimuove i dati salvati
+      outputDiv.textContent = ''; 
+      localStorage.removeItem('venditeData'); 
       alert('Tutti i campi sono stati resettati e i dati cancellati!');
     }
 
@@ -162,8 +156,6 @@
       });
       rows.forEach(row => tbody.appendChild(row));
     }
-
-    // --- Funzioni per la generazione dei messaggi (modificate) ---
 
     function getFormattedMessage() {
       const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -184,9 +176,10 @@
     function generaMessaggio() {
       const messaggio = getFormattedMessage();
       const encodedMessage = encodeURIComponent(messaggio);
-      const telegramLink = `tg://msg?text=${encodedMessage}`;
+      // Modificato il link per Telegram per una maggiore compatibilità con la pre-compilazione
+      const telegramLink = `https://t.me/share/url?text=${encodedMessage}`;
       
-      window.location.href = telegramLink;
+      window.open(telegramLink, '_blank'); // Apre in una nuova scheda o finestra
     }
 
     function generaMessaggioWhatsapp() {
@@ -194,7 +187,7 @@
       const encodedMessage = encodeURIComponent(messaggio);
       const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
 
-      window.location.href = whatsappLink;
+      window.open(whatsappLink, '_blank'); // Apre in una nuova scheda o finestra
     }
 
     // --- Inizializzazione e Event Listeners ---
